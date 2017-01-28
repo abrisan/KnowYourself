@@ -90,12 +90,10 @@ namespace KnowYourself.Controllers
                 command2.Connection = this.conn;
                 command2.CommandType = System.Data.CommandType.Text;
                 command2.CommandText = @"
-                    INSERT INTO users (id, slack_id)
-                    VALUES (@id, @slack_id)
+                    INSERT INTO users (slack_id)
+                    VALUES (@slack_id)
                     ";
-                var param1 = new QC.SqlParameter("id", n);
                 var param2 = new QC.SqlParameter("slack_id", slack_id);
-                command2.Parameters.Add(param1);
                 command2.Parameters.Add(param2);
                 int succ = command2.ExecuteNonQuery();
             }
