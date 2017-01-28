@@ -64,26 +64,6 @@ namespace KnowYourself.Controllers
         public List<String> InsertUser(string slack_id)
         {
             List<String> messages = new List<String>();
-            var command = new QC.SqlCommand();
-            command.Connection = this.conn;
-            command.CommandType = System.Data.CommandType.Text;
-            command.CommandText = @"
-                SELECT *
-                FROM users
-                ORDER BY id
-            ";
-            int n;
-            try
-            {
-                n = (int) command.ExecuteScalar();
-                messages.Add("GOT MAX ID");
-                
-            }
-            catch(Exception e)
-            {
-                messages.Add(e.Message);
-                n = 0;
-            }
             try
             {
                 var command2 = new QC.SqlCommand();
