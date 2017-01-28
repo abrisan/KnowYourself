@@ -62,7 +62,7 @@ namespace KnowYourself.Controllers
             command.Connection = this.conn;
             command.CommandType = System.Data.CommandType.Text;
             command.CommandText = @"
-                SELECT TOP(1) id
+                SELECT id
                 FROM users
                 ORDER BY id
             ";
