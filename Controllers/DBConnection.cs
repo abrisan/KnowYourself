@@ -16,11 +16,17 @@ namespace KnowYourself.Controllers
         {
             conn = getConnection();
             conn.Open();
+
         }
 
         static QC.SqlConnection getConnection()
         {
-            return new QC.SqlConnection("Server = tcp:knowyourself.database.windows.net, 1433; Initial Catalog = KnowYourself; Persist Security Info = False; User ID = su ; Password = !alexandrU97 ; MultipleActiveResultSets = True; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30");
+            return new QC.SqlConnection(@"Server = tcp:knowyourself.database.windows.net, 1433; 
+                    Initial Catalog = KnowYourself; Persist Security Info = False; 
+                    User ID = su ; Password = !alexandrU97 ; 
+                    MultipleActiveResultSets = True; Encrypt = True; 
+                    TrustServerCertificate = False; 
+                    Connection Timeout = 30");
             
         }
 
@@ -62,14 +68,14 @@ namespace KnowYourself.Controllers
             command.Connection = this.conn;
             command.CommandType = System.Data.CommandType.Text;
             command.CommandText = @"
-                SELECT id
+                SELECT *
                 FROM users
                 ORDER BY id
             ";
             int n;
             try
             {
-                n = command.ExecuteReader().GetInt32(0) + 1;
+                n = (int) command.ExecuteScalar();
                 messages.Add("GOT MAX ID");
                 
             }
