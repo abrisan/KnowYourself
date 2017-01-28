@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -27,7 +28,7 @@ namespace KnowYourself
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
-                int succ = conn.InsertUser(activity.From.Id);
+                List<String> succ = conn.InsertUser(activity.From.Id);
 
                 Activity seeDB = activity.CreateReply(succ.ToString());
                 await connector.Conversations.ReplyToActivityAsync(seeDB);

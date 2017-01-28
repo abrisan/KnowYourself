@@ -54,8 +54,9 @@ namespace KnowYourself.Controllers
             return ret;
         }
 
-        public int InsertUser(string slack_id)
+        public List<String> InsertUser(string slack_id)
         {
+            List<String> messages = new List<String>();
             var command = new QC.SqlCommand();
             command.Connection = this.conn;
             command.CommandType = System.Data.CommandType.Text;
@@ -68,9 +69,11 @@ namespace KnowYourself.Controllers
             try
             {
                 n = command.ExecuteReader().GetInt32(0) + 1;
+                messages.Add("GOT MAX ID");
             }
             catch(Exception e)
             {
+                messages.Add(e.Message);
                 n = 0;
             }
             try
@@ -87,12 +90,12 @@ namespace KnowYourself.Controllers
                 command2.Parameters.Add(param1);
                 command2.Parameters.Add(param2);
                 int succ = command2.ExecuteNonQuery();
-                return succ;
             }
             catch(Exception e)
             {
-                return -1;
+                messages.Add(e.Message);
             }
+            return messages;
         }
 
     }
