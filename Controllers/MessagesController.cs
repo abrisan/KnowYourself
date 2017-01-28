@@ -28,9 +28,17 @@ namespace KnowYourself
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
+                String toDisplay = "";
+
                 List<String> succ = conn.InsertUser(activity.From.Id);
 
-                Activity seeDB = activity.CreateReply(succ.ToString());
+                foreach(String s in succ)
+                {
+                    toDisplay += s;
+                    toDisplay += "\n";
+                }
+
+                Activity seeDB = activity.CreateReply(toDisplay);
                 await connector.Conversations.ReplyToActivityAsync(seeDB);
 
                 Activity seeId = activity.CreateReply(activity.From.Id);
