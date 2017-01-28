@@ -15,6 +15,7 @@ namespace KnowYourself.Controllers
         public DBConnection()
         {
             conn = getConnection();
+            conn.Open();
         }
 
         static QC.SqlConnection getConnection()
