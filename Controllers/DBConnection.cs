@@ -63,6 +63,22 @@ namespace KnowYourself.Controllers
 
         public List<String> InsertUser(string slack_id)
         {
+            QC.SqlCommand exists = new QC.SqlCommand();
+            exists.CommandType = System.Data.CommandType.Text;
+            exists.Connection = this.conn;
+            exists.CommandText = @"SELECT * FROM users WHERE slack_id = @User";
+
+            var param1 = new QC.SqlParameter("User", slack_id);
+            exists.Parameters.Add(param1);
+
+            try
+            {
+                int id = (int)exists.ExecuteScalar();
+                if (id > 0) return null;
+            }catch(Exception e)
+            {
+                
+            }
             List<String> messages = new List<String>();
             try
             {
@@ -83,6 +99,31 @@ namespace KnowYourself.Controllers
             }
             return messages;
         }
+
+        public List<String> GetDiseases()
+        {
+            List<String> ret = new List<String>();
+
+            try
+            {
+                QC.SqlCommand com = new QC.SqlCommand();
+                com.Connection = this.conn;
+                com.CommandType = System.Data.CommandType.Text;
+                com.CommandText = @"SELECT disease_name FROM diseases";
+                QC.SqlDataReader result = com.ExecuteReader();
+                while (result.Read())
+                {
+                    ret.Add(result.GetString(0));
+                }
+            }catch(Exception e)
+            {
+                ret.Add(e.Message);
+            }
+
+
+            return ret;
+        }
+
 
     }
 

@@ -32,17 +32,12 @@ namespace KnowYourself
 
                 List<String> succ = conn.InsertUser(activity.From.Id);
 
-                foreach(String s in succ)
+                if(succ == null)
                 {
-                    toDisplay += s;
-                    toDisplay += "\n";
+                    Activity seeDB = activity.CreateReply("ALREADY EXISTS");
+                    await connector.Conversations.ReplyToActivityAsync(seeDB);
                 }
-
-                Activity seeDB = activity.CreateReply(toDisplay);
-                await connector.Conversations.ReplyToActivityAsync(seeDB);
-
-                Activity seeId = activity.CreateReply(activity.From.Id);
-                await connector.Conversations.ReplyToActivityAsync(seeId);
+                
                 // calculate something for us to return
                 int length = (activity.Text ?? string.Empty).Length;
 
