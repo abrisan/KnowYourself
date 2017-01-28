@@ -20,7 +20,7 @@ namespace KnowYourself.Controllers
 
         static QC.SqlConnection getConnection()
         {
-            return new QC.SqlConnection("Server = tcp:knowyourself.database.windows.net, 1433; Initial Catalog = KnowYourself; Persist Security Info = False; User ID = su ; Password = !alexandrU97 ; MultipleActiveResultSets = False; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30");
+            return new QC.SqlConnection("Server = tcp:knowyourself.database.windows.net, 1433; Initial Catalog = KnowYourself; Persist Security Info = False; User ID = su ; Password = !alexandrU97 ; MultipleActiveResultSets = True; Encrypt = True; TrustServerCertificate = False; Connection Timeout = 30");
             
         }
 
@@ -71,6 +71,7 @@ namespace KnowYourself.Controllers
             {
                 n = command.ExecuteReader().GetInt32(0) + 1;
                 messages.Add("GOT MAX ID");
+                
             }
             catch(Exception e)
             {
