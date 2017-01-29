@@ -76,21 +76,16 @@ namespace KnowYourself
                         currentState.SetProperty<bool>("awaitsDiscussion", false);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
-                        foreach (KeyValuePair<int, String> question in questions)
-                        {
-                            Activity debug = activity.CreateReply(question.Value);
-                            await connector.Conversations.ReplyToActivityAsync(debug);
-                        }
                         try
                         {
-                            KeyValuePair<int, String> first = questions.First();
-                            questions.Remove(first.Key);
-                            currentState.SetProperty<int>("currentQuestionID", first.Key);
-                            await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
-                            currentState.SetProperty<Dictionary<int, String>>("questions", questions);
+                            List<int> ids = questions.Keys.OrderBy(i => i).ToList();
+                            string question;
+                            questions.TryGetValue(ids.First(), out question);
+                            currentState.SetProperty<int>("currentQuestionID", ids.First());
+                            currentState.SetProperty<int>("questionListIndex", 0);
                             currentState.SetProperty<bool>("answerQuestion", true);
                             await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
-                            Activity resp = activity.CreateReply(first.Value);
+                            Activity resp = activity.CreateReply(question);
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
                         {
@@ -146,8 +141,9 @@ namespace KnowYourself
                 else if (currentState.GetProperty<bool>("answerQuestion"))
                 {
                     conn.StoreAnswerToDB(activity.Text, activity.From.Id, currentState.GetProperty<int>("currentQuestionID"));
-                    Dictionary<int, String> qs = currentState.GetProperty<Dictionary<int, String>>("questions");
-                    if(qs.Count == 0)
+                    Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
+                    int nextIndex = currentState.GetProperty<int>("questionListIndex") + 1;
+                    if(nextIndex > questions.Count)
                     {
                         currentState.SetProperty<bool>("answerQuestion", false);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
@@ -156,13 +152,22 @@ namespace KnowYourself
                     }
                     else
                     {
-                        KeyValuePair<int, String> question = qs.First();
-                        currentState.SetProperty<int>("questionID", question.Key);
-                        qs.Remove(question.Key);
-                        currentState.SetProperty<Dictionary<int, String>>("questions", qs);
-                        await state.BotState.SetUserDataAsync(activity.ChannelId,activity.From.Id,currentState);
-                        Activity reply = activity.CreateReply(question.Value);
-                        await connector.Conversations.ReplyToActivityAsync(reply);
+                        try
+                        {
+                            List<int> ids = questions.Keys.OrderBy(i => i).ToList();
+                            string question;
+                            questions.TryGetValue(ids.ElementAt(nextIndex), out question);
+                            currentState.SetProperty<int>("currentQuestionID", ids.ElementAt(nextIndex));
+                            currentState.SetProperty<int>("questionListIndex", nextIndex);
+                            await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                            Activity resp = activity.CreateReply(question);
+                            await connector.Conversations.ReplyToActivityAsync(resp);
+                        }catch(Exception e)
+                        {
+                            Activity debug = activity.CreateReply(e.StackTrace);
+                            await connector.Conversations.ReplyToActivityAsync(debug);
+                        }
+                        
                     }
                 }
                 else
