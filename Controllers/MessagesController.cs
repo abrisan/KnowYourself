@@ -89,8 +89,10 @@ namespace KnowYourself
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
                         {
-                            Activity debug2 = activity.CreateReply(e.StackTrace);
+                            Activity debug2 = activity.CreateReply(e.Source);
+                            Activity debug3 = activity.CreateReply(e.Message);
                             await connector.Conversations.ReplyToActivityAsync(debug2);
+                            await connector.Conversations.ReplyToActivityAsync(debug3);
                         }
                         
                     }
@@ -164,8 +166,11 @@ namespace KnowYourself
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
                         {
-                            Activity debug = activity.CreateReply(e.StackTrace);
-                            await connector.Conversations.ReplyToActivityAsync(debug);
+
+                            Activity debug2 = activity.CreateReply(e.Source);
+                            Activity debug3 = activity.CreateReply(e.Message);
+                            await connector.Conversations.ReplyToActivityAsync(debug2);
+                            await connector.Conversations.ReplyToActivityAsync(debug3);
                         }
                         
                     }
