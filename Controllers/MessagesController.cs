@@ -81,11 +81,11 @@ namespace KnowYourself
                             List<int> ids = questions.Keys.OrderBy(i => i).ToList();
                             string question ;
                             bool succ = questions.TryGetValue(ids.First(), out question);
-                            currentState.SetProperty<int>("currentQuestionID", ids.First());
-                            currentState.SetProperty<int>("questionListIndex", 0);
-                            currentState.SetProperty<bool>("answerQuestion", true);
-                            await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
-                            Activity resp = activity.CreateReply(succ.ToString());
+                            //currentState.SetProperty<int>("currentQuestionID", ids.First());
+                            //currentState.SetProperty<int>("questionListIndex", 0);
+                            //currentState.SetProperty<bool>("answerQuestion", true);
+                            // await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                            Activity resp = activity.CreateReply(question);
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
                         {
