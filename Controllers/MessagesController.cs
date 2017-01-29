@@ -76,8 +76,11 @@ namespace KnowYourself
                         currentState.SetProperty<bool>("awaitsDiscussion", false);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
-                        Activity debug = activity.CreateReply(questions.ToString());
-                        await connector.Conversations.ReplyToActivityAsync(debug);
+                        foreach (KeyValuePair<int, String> question in questions)
+                        {
+                            Activity debug = activity.CreateReply(question.Value);
+                            await connector.Conversations.ReplyToActivityAsync(debug);
+                        }
                         try
                         {
                             KeyValuePair<int, String> first = questions.First();
@@ -91,7 +94,7 @@ namespace KnowYourself
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
                         {
-                            Activity debug2 = activity.CreateReply(e.Message);
+                            Activity debug2 = activity.CreateReply(e.StackTrace);
                             await connector.Conversations.ReplyToActivityAsync(debug2);
                         }
                         
