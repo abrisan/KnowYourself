@@ -30,36 +30,7 @@ namespace KnowYourself.Controllers
             
         }
 
-        public Dictionary<String, List<String>> query_table_for_id(String table_name, String id)
-        {
-            var command = new QC.SqlCommand();
-            command.Connection = this.conn;
-            command.CommandType = System.Data.CommandType.Text;
-            command.CommandText = @"
-                SELECT * FROM @Name WHERE id = @Id
-            ";
-            var param1 = new QC.SqlParameter("Name", table_name);
-            var param2 = new QC.SqlParameter("Id", id);
-
-            command.Parameters.Add(param1);
-            command.Parameters.Add(param2);
-
-            QC.SqlDataReader reader = command.ExecuteReader();
-
-            Dictionary<String, List<String>> ret = new Dictionary<string, List<string>>();
-
-            while (reader.Read())
-            {
-                List<String> adder = new List<string>();
-                for(int i = 1; i < reader.FieldCount; ++i)
-                {
-                    adder.Add(reader.GetString(i));
-                }
-                ret.Add(reader.GetString(0), adder);
-            }
-
-            return ret;
-        }
+      
 
         public List<String> InsertUser(string slack_id)
         {
@@ -131,6 +102,121 @@ namespace KnowYourself.Controllers
             }
 
             return false;
+        }
+
+        public void AddUserDisease(String slack_id, String disease_name)
+        {
+            QC.SqlCommand selectID = new QC.SqlCommand();
+            selectID.Connection = this.conn;
+            selectID.CommandType = System.Data.CommandType.Text;
+            selectID.CommandText = @"SELECT id FROM users WHERE slack_id = @Name";
+            var s_id = new QC.SqlParameter("Name", slack_id);
+            selectID.Parameters.Add(s_id);
+
+            QC.SqlCommand selectDisease = new QC.SqlCommand();
+            selectDisease.Connection= this.conn;
+            selectDisease.CommandType = System.Data.CommandType.Text;
+            selectDisease.CommandText = @"SELECT id FROM diseases WHERE disease_name = @Name";
+            var d_id = new QC.SqlParameter("Name",disease_name);
+
+            selectDisease.Parameters.Add(d_id);
+
+            try
+            {
+                int id = (int) selectID.ExecuteScalar();
+                int ds_id = (int)selectDisease.ExecuteScalar();
+
+                QC.SqlCommand inserter = new QC.SqlCommand();
+                inserter.CommandType = System.Data.CommandType.Text;
+                inserter.Connection = this.conn;
+                inserter.CommandText = @"INSERT INTO user_diseases (user_id, disease_id)
+                                         VALUES (@id1, @id2)";
+                var id1 = new QC.SqlParameter("id1", id);
+                var id2 = new QC.SqlParameter("id2", ds_id);
+                inserter.Parameters.Add(id1);
+                inserter.Parameters.Add(id2);
+
+                inserter.ExecuteNonQuery();
+
+            }catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        public Dictionary<int, String> GetQuestionsForUser(string slack_id)
+        {
+            Dictionary<int, String> ret = new Dictionary<int, String>();
+            QC.SqlCommand comm = new QC.SqlCommand();
+            comm.Connection = this.conn;
+            comm.CommandType = System.Data.CommandType.Text;
+            comm.CommandText = @"
+                
+                SELECT Q.*
+                FROM disease_questions DQ, diseases D, questions Q, user_diseases UD, users U
+                WHERE
+                    U.slack_id = @Name AND
+                    U.id = UD.user_id AND
+                    UD.disease_id = D.id AND
+                    D.id = DQ.disease_id AND
+                    DQ.question_id = Q.id
+            ";
+            var param1 = new QC.SqlParameter("Name", slack_id);
+            comm.Parameters.Add(param1);
+
+            var response = comm.ExecuteReader();
+
+            while (response.Read())
+            {
+                ret.Add(response.GetInt32(0), response.GetString(1));
+            }
+
+            return ret;
+        } 
+
+        public void StoreAnswerToDB(string answer, string slack_id, int questionID)
+        {
+            DateTime time = new DateTime();
+
+            String timeS = $"{time.Year}-{time.Month}-{time.Day}";
+
+            QC.SqlCommand getID = new QC.SqlCommand();
+            getID.Connection = this.conn;
+            getID.CommandType = System.Data.CommandType.Text;
+            getID.CommandText = "SELECT id FROM users WHERE slack_id = @Name";
+
+            var param1 = new QC.SqlParameter("Name", slack_id);
+            getID.Parameters.Add(param1);
+
+            try
+            {
+                int id = (int)getID.ExecuteScalar();
+                QC.SqlCommand inserter = new QC.SqlCommand();
+                inserter.Connection = this.conn;
+                inserter.CommandType = System.Data.CommandType.Text;
+                inserter.CommandText = @"
+                    INSERT INTO answers (question_id, answer,user_id, date)
+                    VALUES (@id, @ans, @usr, @date)
+                ";
+
+                var param2 = new QC.SqlParameter("id", questionID);
+                var param3 = new QC.SqlParameter("ans", answer);
+                var param4 = new QC.SqlParameter("usr", id);
+                var param5 = new QC.SqlParameter("date", timeS);
+
+                inserter.Parameters.Add(param2);
+                inserter.Parameters.Add(param3);
+                inserter.Parameters.Add(param4);
+                inserter.Parameters.Add(param5);
+
+                inserter.ExecuteNonQuery();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            
         }
 
 

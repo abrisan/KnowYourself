@@ -41,6 +41,9 @@ namespace KnowYourself
         {
             if (activity.Type == ActivityTypes.Message)
             {
+
+
+
                 
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
@@ -71,7 +74,7 @@ namespace KnowYourself
                     if(tempMes.Equals("Yes") || tempMes.Equals("Yeah") || tempMes.Equals("Sure"))
                     {
                         currentState.SetProperty<bool>("awaitsDiscussion", false);
-                        currentState.SetProperty<bool>("talkAboutHealth", true);
+                        currentState.SetProperty<bool>("talkAbouHealth", true);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                     }
                     else
@@ -86,7 +89,17 @@ namespace KnowYourself
                 }
                 else if (currentState.GetProperty<bool>("awaitDiseases"))
                 {
-
+                    String slack_id = activity.From.Id;
+                    List<String> diseases = activity.Text.Split(',').ToList();
+                    foreach (String disease in diseases)
+                    {
+                        conn.AddUserDisease(slack_id, disease);
+                    }
+                    currentState.SetProperty<bool>("awaitDiseases", false);
+                    currentState.SetProperty<bool>("awaitsDiscussion", true);
+                    await state.BotState.SetUserDataAsync(activity.ChannelId,activity.From.Id,currentState);
+                    Activity resp = activity.CreateReply("Would you like to answer some questions now, or later?");
+                    await connector.Conversations.ReplyToActivityAsync(resp);
                 }
                 else if (currentState.GetProperty<bool>("talkAboutLife"))
                 {
@@ -111,11 +124,37 @@ namespace KnowYourself
                 }
                 else if (currentState.GetProperty<bool>("talkAboutHealth"))
                 {
-
+                    Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
+                    KeyValuePair<int, String> first = questions.First();
+                    questions.Remove(first.Key);
+                    currentState.SetProperty<int>("currentQuestionID", first.Key);
+                    currentState.SetProperty<Dictionary<int, String>>("questions", questions);
+                    currentState.SetProperty<bool>("talkAboutHealth", false);
+                    currentState.SetProperty<bool>("answerQuestion", true);
+                    await state.BotState.SetUserDataAsync(activity.ChannelId,activity.From.Id,currentState);
+                    Activity resp = activity.CreateReply(first.Value);
+                    await connector.Conversations.ReplyToActivityAsync(resp);
                 }
                 else if (currentState.GetProperty<bool>("answerQuestion"))
                 {
-
+                    conn.StoreAnswerToDB(activity.Text, activity.From.Id, currentState.GetProperty<int>("currentQuestionID"));
+                    Dictionary<int, String> qs = currentState.GetProperty<Dictionary<int, String>>("questions");
+                    if(qs.Count == 0)
+                    {
+                        currentState.SetProperty<bool>("answerQuestion", false);
+                        Activity reply = activity.CreateReply("Thanks for taking the time. Talk tomorrow");
+                        await connector.Conversations.ReplyToActivityAsync(reply);
+                    }
+                    else
+                    {
+                        KeyValuePair<int, String> question = qs.First();
+                        currentState.SetProperty<int>("questionID", question.Key);
+                        qs.Remove(question.Key);
+                        currentState.SetProperty<Dictionary<int, String>>("questions", qs);
+                        await state.BotState.SetUserDataAsync(activity.ChannelId,activity.From.Id,currentState);
+                        Activity reply = activity.CreateReply(question.Value);
+                        await connector.Conversations.ReplyToActivityAsync(reply);
+                    }
                 }
                 else
                 {
@@ -127,12 +166,16 @@ namespace KnowYourself
                         Activity setUp = activity.CreateReply(@"In order to start using KnowYourself, please start
                                         by selecting the diseases for which you would like to track your health. 
                                          You will receive a list of diseases from which you can choose. To select,
-                                           respond to this message with a space separated list of diseases. Thanks
+                                           respond to this message with a comma separated list of diseases. Thanks
                                             for using KnowYourself");
                         await connector.Conversations.ReplyToActivityAsync(setUp);
                         state.BotState.SetConversationData(activity.ChannelId, activity.Conversation.Id, new BotData("WaitingForD", true));
                         currentState.SetProperty<bool>("awaitDiseases", true);
-                        currentState.SetProperty<bool>("noState", false);
+                        foreach (String disease in conn.GetDiseases())
+                        {
+                            Activity resp = activity.CreateReply(disease);
+                            await connector.Conversations.ReplyToActivityAsync(resp);
+                        }
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                     }
                     else
@@ -141,7 +184,6 @@ namespace KnowYourself
                         await connector.Conversations.ReplyToActivityAsync(welcomeBack);
                         Activity talkAboutHealth = activity.CreateReply($"Would you like to talk about your health, {activity.From.Name}?");
                         currentState.SetProperty<bool>("awaitsDiscussion", true);
-                        currentState.SetProperty<bool>("noState", false);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         await connector.Conversations.ReplyToActivityAsync(talkAboutHealth);
 
