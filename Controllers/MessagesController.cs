@@ -53,7 +53,7 @@ namespace KnowYourself
 
                 const int talkLimitRecom = 3;
 
-                
+
 
                 /*
                  * We define the following state properties:
@@ -67,15 +67,24 @@ namespace KnowYourself
                
                 */
 
-                
+               
                 if (currentState.GetProperty<bool>("awaitsDiscussion"))
                 {
                     var tempMes = activity.Text;
                     if(tempMes.Equals("Yes") || tempMes.Equals("Yeah") || tempMes.Equals("Sure"))
                     {
                         currentState.SetProperty<bool>("awaitsDiscussion", false);
-                        currentState.SetProperty<bool>("talkAbouHealth", true);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                        Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
+                        KeyValuePair<int, String> first = questions.First();
+                        questions.Remove(first.Key);
+                        currentState.SetProperty<int>("currentQuestionID", first.Key);
+                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                        currentState.SetProperty<Dictionary<int, String>>("questions", questions);
+                        currentState.SetProperty<bool>("answerQuestion", true);
+                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                        Activity resp = activity.CreateReply(first.Value);
+                        await connector.Conversations.ReplyToActivityAsync(resp);
                     }
                     else
                     {
@@ -97,7 +106,7 @@ namespace KnowYourself
                     }
                     currentState.SetProperty<bool>("awaitDiseases", false);
                     currentState.SetProperty<bool>("awaitsDiscussion", true);
-                    await state.BotState.SetUserDataAsync(activity.ChannelId,activity.From.Id,currentState);
+                    await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                     Activity resp = activity.CreateReply("Would you like to answer some questions now, or later?");
                     await connector.Conversations.ReplyToActivityAsync(resp);
                 }
@@ -106,7 +115,6 @@ namespace KnowYourself
                     if(currentState.GetProperty<int>("factCounter") == talkLimitRecom)
                     {
                         currentState.SetProperty<bool>("talkAboutLife", false);
-                        Console.WriteLine(currentState.GetProperty<int>("factCounter"));
                         currentState.SetProperty<bool>("awaitsDiscussion", true);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         Activity resp = activity.CreateReply("Do you feel ready to talk about your health?");
@@ -122,19 +130,6 @@ namespace KnowYourself
                         await connector.Conversations.ReplyToActivityAsync(resp);
                     }
                 }
-                else if (currentState.GetProperty<bool>("talkAboutHealth"))
-                {
-                    Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
-                    KeyValuePair<int, String> first = questions.First();
-                    questions.Remove(first.Key);
-                    currentState.SetProperty<int>("currentQuestionID", first.Key);
-                    currentState.SetProperty<Dictionary<int, String>>("questions", questions);
-                    currentState.SetProperty<bool>("talkAboutHealth", false);
-                    currentState.SetProperty<bool>("answerQuestion", true);
-                    await state.BotState.SetUserDataAsync(activity.ChannelId,activity.From.Id,currentState);
-                    Activity resp = activity.CreateReply(first.Value);
-                    await connector.Conversations.ReplyToActivityAsync(resp);
-                }
                 else if (currentState.GetProperty<bool>("answerQuestion"))
                 {
                     conn.StoreAnswerToDB(activity.Text, activity.From.Id, currentState.GetProperty<int>("currentQuestionID"));
@@ -142,6 +137,7 @@ namespace KnowYourself
                     if(qs.Count == 0)
                     {
                         currentState.SetProperty<bool>("answerQuestion", false);
+                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         Activity reply = activity.CreateReply("Thanks for taking the time. Talk tomorrow");
                         await connector.Conversations.ReplyToActivityAsync(reply);
                     }
@@ -169,14 +165,13 @@ namespace KnowYourself
                                            respond to this message with a comma separated list of diseases. Thanks
                                             for using KnowYourself");
                         await connector.Conversations.ReplyToActivityAsync(setUp);
-                        state.BotState.SetConversationData(activity.ChannelId, activity.Conversation.Id, new BotData("WaitingForD", true));
                         currentState.SetProperty<bool>("awaitDiseases", true);
+                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         foreach (String disease in conn.GetDiseases())
                         {
                             Activity resp = activity.CreateReply(disease);
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }
-                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                     }
                     else
                     {
