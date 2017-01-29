@@ -67,7 +67,7 @@ namespace KnowYourself
                
                 */
 
-                if (activity.Text.Equals("bye"))
+                if (activity.Text.ToLower().Equals("bye"))
                 {
 
                     currentState.SetProperty<bool>("awaitDiseases", false);
