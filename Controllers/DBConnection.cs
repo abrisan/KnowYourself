@@ -63,22 +63,7 @@ namespace KnowYourself.Controllers
 
         public List<String> InsertUser(string slack_id)
         {
-            QC.SqlCommand exists = new QC.SqlCommand();
-            exists.CommandType = System.Data.CommandType.Text;
-            exists.Connection = this.conn;
-            exists.CommandText = @"SELECT * FROM users WHERE slack_id = @User";
-
-            var param1 = new QC.SqlParameter("User", slack_id);
-            exists.Parameters.Add(param1);
-
-            try
-            {
-                int id = (int)exists.ExecuteScalar();
-                if (id > 0) return null;
-            }catch(Exception e)
-            {
-                
-            }
+            
             List<String> messages = new List<String>();
             try
             {
@@ -122,6 +107,30 @@ namespace KnowYourself.Controllers
 
 
             return ret;
+        }
+
+        public bool UserExists(string slack_id)
+        {
+            QC.SqlCommand exists = new QC.SqlCommand();
+            exists.CommandType = System.Data.CommandType.Text;
+            exists.Connection = this.conn;
+            exists.CommandText = @"SELECT * FROM users WHERE slack_id = @User";
+
+            var param1 = new QC.SqlParameter("User", slack_id);
+            exists.Parameters.Add(param1);
+
+            try
+            {
+                int id = (int)exists.ExecuteScalar();
+                if (id > 0) return true;
+               
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+            return false;
         }
 
 
