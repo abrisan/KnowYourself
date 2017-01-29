@@ -84,7 +84,6 @@ namespace KnowYourself
                             currentState.SetProperty<int>("currentQuestionID", ids.First());
                             currentState.SetProperty<int>("questionListIndex", 0);
                             currentState.SetProperty<bool>("answerQuestion", true);
-                            // await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                             Activity resp = activity.CreateReply(question);
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
@@ -94,6 +93,7 @@ namespace KnowYourself
                             await connector.Conversations.ReplyToActivityAsync(debug2);
                             await connector.Conversations.ReplyToActivityAsync(debug3);
                         }
+                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         
                     }
                     else
@@ -161,7 +161,7 @@ namespace KnowYourself
                             questions.TryGetValue(ids.ElementAt(nextIndex), out question);
                             currentState.SetProperty<int>("currentQuestionID", ids.ElementAt(nextIndex));
                             currentState.SetProperty<int>("questionListIndex", nextIndex);
-                            await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                           
                             Activity resp = activity.CreateReply(question);
                             await connector.Conversations.ReplyToActivityAsync(resp);
                         }catch(Exception e)
@@ -172,7 +172,8 @@ namespace KnowYourself
                             await connector.Conversations.ReplyToActivityAsync(debug2);
                             await connector.Conversations.ReplyToActivityAsync(debug3);
                         }
-                        
+                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+
                     }
                 }
                 else
