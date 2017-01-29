@@ -76,15 +76,25 @@ namespace KnowYourself
                         currentState.SetProperty<bool>("awaitsDiscussion", false);
                         await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
                         Dictionary<int, String> questions = conn.GetQuestionsForUser(activity.From.Id);
-                        KeyValuePair<int, String> first = questions.First();
-                        questions.Remove(first.Key);
-                        currentState.SetProperty<int>("currentQuestionID", first.Key);
-                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
-                        currentState.SetProperty<Dictionary<int, String>>("questions", questions);
-                        currentState.SetProperty<bool>("answerQuestion", true);
-                        await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
-                        Activity resp = activity.CreateReply(first.Value);
-                        await connector.Conversations.ReplyToActivityAsync(resp);
+                        Activity debug = activity.CreateReply(questions.ToString());
+                        await connector.Conversations.ReplyToActivityAsync(debug);
+                        try
+                        {
+                            KeyValuePair<int, String> first = questions.First();
+                            questions.Remove(first.Key);
+                            currentState.SetProperty<int>("currentQuestionID", first.Key);
+                            await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                            currentState.SetProperty<Dictionary<int, String>>("questions", questions);
+                            currentState.SetProperty<bool>("answerQuestion", true);
+                            await state.BotState.SetUserDataAsync(activity.ChannelId, activity.From.Id, currentState);
+                            Activity resp = activity.CreateReply(first.Value);
+                            await connector.Conversations.ReplyToActivityAsync(resp);
+                        }catch(Exception e)
+                        {
+                            Activity debug2 = activity.CreateReply(e.Message);
+                            await connector.Conversations.ReplyToActivityAsync(debug2);
+                        }
+                        
                     }
                     else
                     {
